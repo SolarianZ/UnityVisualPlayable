@@ -12,12 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35a729aec19b40479219b134d782c2d7, type: 3}
   m_Name: CodeGenConfig
   m_EditorClassIdentifier: 
-  _sourceTypes:
-  - UnityEngine.Playables.FrameData+EvaluationType
-  - UnityEngine.Playables.FrameData
-  - UnityEngine.Playables.FrameRate
-  - UnityEngine.Playables.Playable
-  - UnityEngine.Playables.INotification
-  - UnityEngine.Playables.IPlayableBehaviour
-  - UnityEngine.Playables.IPlayableBehaviour
-  - UnityEngine.Playables.IPlayableBehaviour
+  _sourceTypes: []

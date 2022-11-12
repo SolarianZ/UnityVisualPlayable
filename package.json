@@ -1,0 +1,21 @@
+{
+  "name": "com.greenbamboogames.visualplayable",
+  "version": "0.0.1",
+  "displayName": "Visual Playable!",
+  "description": "Playable integration for visual scripting.",
+  "unity": "2021.3",
+  "documentationUrl": "https://github.com/SolarianZ/UnityVisualPlayable/blob/main/README.md",
+  "changelogUrl": "",
+  "licensesUrl": "https://github.com/SolarianZ/UnityVisualPlayable/blob/main/LICENSE",
+  "keywords": [],
+  "author": {
+    "name": "GBG",
+    "email": "vdergow@hotmail.com",
+    "url": "https://github.com/SolarianZ"
+  },
+  "type": "library",
+  "hideInEditor": false,
+  "dependencies": {
+    "com.unity.visualscripting": "1.7.6"
+  }
+}

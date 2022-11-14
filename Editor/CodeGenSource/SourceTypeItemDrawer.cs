@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Editor.CodeGenSource.Editor
+namespace GBG.VisualPlayable.Editor.CodeGen
 {
     public class SourceTypeItemDrawer : VisualElement
     {

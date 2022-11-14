@@ -7,7 +7,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Playables;
 
-namespace GBG.VisualPlayable.Editor.Editor.SetupPlayableNode
+namespace GBG.VisualPlayable.Editor.Setup
 {
     public static class SetupVisualPlayable
     {

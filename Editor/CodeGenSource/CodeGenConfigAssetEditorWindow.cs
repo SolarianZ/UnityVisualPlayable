@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.UIElements;
 
-namespace Editor.CodeGenSource.Editor
+namespace GBG.VisualPlayable.Editor.CodeGen
 {
     public class CodeGenConfigAssetEditorWindow : EditorWindow
     {

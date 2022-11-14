@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
 
-namespace Editor.CodeGenSource.Editor
+namespace GBG.VisualPlayable.Editor.CodeGen
 {
     // [CreateAssetMenu(menuName = "Bamboo/Code Gen Config Asset", fileName = "New CodeGenConfig")]
     public class CodeGenConfigAsset : ScriptableObject

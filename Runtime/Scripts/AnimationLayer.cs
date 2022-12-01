@@ -199,6 +199,17 @@ namespace GBG.VisualPlayable
             }
         }
 
+
+        public void PlayBlendSpace(IBlendSpace blendSpace, float speed = 1, float fixedTime = 0)
+        {
+            var blendSpacePlayable = blendSpace.Mixer;
+            blendSpacePlayable.SetSpeed(speed);
+            blendSpacePlayable.SetTime(fixedTime);
+
+            PlayPlayable(blendSpacePlayable);
+        }
+
+
         public void PlayPlayable(Playable playable)
         {
             ClearInputs();
@@ -241,6 +252,16 @@ namespace GBG.VisualPlayable
                 Debug.LogWarning("The sum of weight of animation clips is not equals to 1.");
             }
         }
+
+
+        public void CrossFadeBlendSpace(IBlendSpace blendSpace, float speed = 1, float fixedFadeTime = 0.25f,
+            float fixedOffsetTime = 0, bool frozeSource = false)
+        {
+            var blendSpacePlayable = blendSpace.Mixer;
+            blendSpacePlayable.SetSpeed(speed);
+            CrossFadePlayable(blendSpacePlayable, fixedFadeTime, fixedOffsetTime, frozeSource);
+        }
+
 
         public void CrossFadePlayable(Playable playable, float fixedFadeTime = 0.25f, float fixedOffsetTime = 0,
             bool frozeSource = false)

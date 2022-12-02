@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GBG.VisualPlayable.Attribute;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Animations;
@@ -6,15 +7,44 @@ using UnityEngine.Playables;
 
 namespace GBG.VisualPlayable
 {
-    [DisallowMultipleComponent]
-    [RequireComponent(typeof(Animator))]
-    public class VisualPlayableBrain : MonoBehaviour
+    public class AnimationBrain : IDisposable
     {
-        private Animator _animator;
+        private readonly Animator _animator;
 
         private PlayableGraph _graph;
 
         private AnimationLayerMixerPlayable _layerMixer;
+
+
+        public AnimationBrain(Animator animator, string name)
+        {
+            _animator = animator;
+            _graph = PlayableGraph.Create($"{nameof(AnimationBrain)}.{name}");
+            _layerMixer = AnimationLayerMixerPlayable.Create(_graph);
+
+            var animOutput = AnimationPlayableOutput.Create(_graph, "Animation Output", _animator);
+            animOutput.SetSourcePlayable(_layerMixer);
+
+            _graph.Play();
+        }
+
+        public void Update(float deltaTime)
+        {
+            foreach (var layer in _layers)
+            {
+                layer.Update(deltaTime);
+            }
+
+            _graph.Evaluate(deltaTime);
+        }
+
+        public void Dispose()
+        {
+            if (_graph.IsValid())
+            {
+                _graph.Destroy();
+            }
+        }
 
 
         #region Graph Management
@@ -32,12 +62,6 @@ namespace GBG.VisualPlayable
         public void SetTimeUpdateMode(DirectorUpdateMode updateMode)
         {
             _graph.SetTimeUpdateMode(updateMode);
-        }
-
-        // TODO: Update layers
-        public void ManualUpdate(float deltaTime)
-        {
-            _graph.Evaluate(deltaTime);
         }
 
         public void Play()
@@ -58,8 +82,8 @@ namespace GBG.VisualPlayable
         private readonly List<AnimationLayer> _layers = new();
 
 
-        public byte AddLayer(string layerName, byte inputCount = 0,
-            float weight = 0, bool isAdditive = false, AvatarMask mask = null)
+        [FailureOutputTriggerOnException]
+        public byte AddLayer(string layerName, float weight = 0, bool isAdditive = false, AvatarMask mask = null)
         {
             if (layerName == null)
             {
@@ -91,6 +115,7 @@ namespace GBG.VisualPlayable
             return newLayerIndex;
         }
 
+        [FailureOutputTriggerOnReturnNull]
         public AnimationLayer GetLayer(string layerName)
         {
             var layerIndex = FindLayerIndex(layerName);
@@ -102,11 +127,13 @@ namespace GBG.VisualPlayable
             return GetLayer((byte)layerIndex);
         }
 
+        [FailureOutputTriggerOnReturnNull]
         public AnimationLayer GetLayer(byte layerIndex)
         {
             return _layers[layerIndex];
         }
 
+        [FailureOutputTriggerOnReturnFalse]
         public bool SetLayerWeight(string layerName, float weight)
         {
             var layerIndex = FindLayerIndex(layerName);
@@ -118,6 +145,7 @@ namespace GBG.VisualPlayable
             return SetLayerWeight((byte)layerIndex, weight);
         }
 
+        [FailureOutputTriggerOnReturnFalse]
         public bool SetLayerWeight(byte layerIndex, float weight)
         {
             if (layerIndex < _layerMixer.GetInputCount())
@@ -129,6 +157,7 @@ namespace GBG.VisualPlayable
             return false;
         }
 
+        [FailureOutputTriggerOnReturnFalse]
         public bool SetLayerAdditive(string layerName, bool isAdditive)
         {
             var layerIndex = FindLayerIndex(layerName);
@@ -140,6 +169,7 @@ namespace GBG.VisualPlayable
             return SetLayerAdditive((byte)layerIndex, isAdditive);
         }
 
+        [FailureOutputTriggerOnReturnFalse]
         public bool SetLayerAdditive(byte layerIndex, bool isAdditive)
         {
             if (layerIndex < _layerMixer.GetInputCount())
@@ -151,6 +181,7 @@ namespace GBG.VisualPlayable
             return false;
         }
 
+        [FailureOutputTriggerOnReturnMinus]
         public int FindLayerIndex(string layerName)
         {
             for (int i = 0; i < _layers.Count; i++)
@@ -162,42 +193,6 @@ namespace GBG.VisualPlayable
             }
 
             return -1;
-        }
-
-        #endregion
-
-
-        #region Mono Messages
-
-        private void OnEnable()
-        {
-            if (!_graph.IsValid())
-            {
-                _animator = GetComponent<Animator>();
-                _graph = PlayableGraph.Create($"{nameof(VisualPlayableBrain)}.{name}");
-                _layerMixer = AnimationLayerMixerPlayable.Create(_graph);
-
-                var animOutput = AnimationPlayableOutput.Create(_graph, "Animation Output", _animator);
-                animOutput.SetSourcePlayable(_layerMixer);
-            }
-
-            _graph.Play();
-        }
-
-        private void OnDisable()
-        {
-            if (_graph.IsValid())
-            {
-                _graph.Stop();
-            }
-        }
-
-        private void OnDestroy()
-        {
-            if (_graph.IsValid())
-            {
-                _graph.Destroy();
-            }
         }
 
         #endregion

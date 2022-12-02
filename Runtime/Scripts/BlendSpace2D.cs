@@ -2,8 +2,18 @@
 
 namespace GBG.VisualPlayable
 {
-    public class BlendSpace2D
+    // TODO: BlendSpace2D
+    public class BlendSpace2D : IBlendSpace
     {
-        internal AnimationMixerPlayable Mixer { get; }
+        AnimationMixerPlayable IBlendSpace.Mixer => _mixer;
+
+        private AnimationMixerPlayable _mixer;
+
+
+        public void SetParameterX(float value) { }
+
+        public void SetParameterY(float value) { }
+
+        public void SetParameters(float x, float y) { }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using GBG.VisualPlayable.Attribute;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
@@ -17,13 +18,14 @@ namespace GBG.VisualPlayable
         private PlayableGraph _graph;
 
 
-        public AnimationLayer(PlayableGraph graph, string name, byte index)
+        internal AnimationLayer(PlayableGraph graph, string name, byte index)
         {
             _graph = graph;
 
             Name = name;
             Index = index;
             RootMixer = AnimationMixerPlayable.Create(_graph, 2);
+            RootMixer.SetPropagateSetTime(true);
         }
 
         public void Update(float deltaTime)
@@ -50,6 +52,8 @@ namespace GBG.VisualPlayable
 
         #region Animation Management
 
+        public string MainAnimationTag { get; private set; } = string.Empty;
+
         // ClipStartEvent
         // ClipStopEvent
         // TransitionBeginEvent
@@ -63,6 +67,7 @@ namespace GBG.VisualPlayable
         private float _fixedCorssFadeTimer;
 
 
+        [FailureOutputTriggerOnReturnFalse(SuccessName = "True", FailureName = "False")]
         public bool IsInTransition()
         {
             return _fixedCorssFadeTimer < _fixedCrossFadeTime;
@@ -80,6 +85,30 @@ namespace GBG.VisualPlayable
             return 0;
         }
 
+        public void GetMixSpeeds(IList<double> speeds)
+        {
+            speeds.Clear();
+
+            var inputMixer = RootMixer.GetInput(_mainInputIndex);
+            if (!inputMixer.IsValid())
+            {
+                return;
+            }
+
+            for (int i = 0; i < inputMixer.GetInputCount(); i++)
+            {
+                var input = inputMixer.GetInput(i);
+                if (input.IsValid())
+                {
+                    speeds.Add(input.GetSpeed());
+                }
+                else
+                {
+                    speeds.Add(0);
+                }
+            }
+        }
+
         public void SetSpeed(double speed)
         {
             var input = RootMixer.GetInput(_mainInputIndex);
@@ -89,7 +118,7 @@ namespace GBG.VisualPlayable
             }
         }
 
-        public void SetSpeeds(IReadOnlyList<float> speeds)
+        public void SetMixSpeeds(IReadOnlyList<float> speeds)
         {
             var inputMixer = RootMixer.GetInput(_mainInputIndex);
             if (!inputMixer.IsValid())
@@ -127,6 +156,30 @@ namespace GBG.VisualPlayable
             return 0;
         }
 
+        public void GetMixTimes(IList<double> times)
+        {
+            times.Clear();
+
+            var inputMixer = RootMixer.GetInput(_mainInputIndex);
+            if (!inputMixer.IsValid())
+            {
+                return;
+            }
+
+            for (int i = 0; i < inputMixer.GetInputCount(); i++)
+            {
+                var input = inputMixer.GetInput(i);
+                if (input.IsValid())
+                {
+                    times.Add(input.GetTime());
+                }
+                else
+                {
+                    times.Add(0);
+                }
+            }
+        }
+
         public void SetTime(double time)
         {
             var input = RootMixer.GetInput(_mainInputIndex);
@@ -136,7 +189,7 @@ namespace GBG.VisualPlayable
             }
         }
 
-        public void SetTimes(IReadOnlyList<float> times)
+        public void SetMixTimes(IReadOnlyList<float> times)
         {
             var inputMixer = RootMixer.GetInput(_mainInputIndex);
             if (!inputMixer.IsValid())
@@ -163,17 +216,16 @@ namespace GBG.VisualPlayable
         }
 
 
-        public void PlayClip(AnimationClip clip, float speed = 1, float time = 0, bool isFixedTime = false)
+        public void PlayClip(string tag, AnimationClip clip, float clipSpeed = 1, float clipOffsetTime = 0,
+            bool isFixedTime = false)
         {
-            var animClipPlayable = AnimationClipPlayable.Create(_graph, clip);
-            var fixedTime = GetFixedTime(clip, time, isFixedTime);
-            animClipPlayable.SetSpeed(speed);
-            animClipPlayable.SetTime(fixedTime);
-
-            PlayPlayable(animClipPlayable);
+            var playable = AnimationClipPlayable.Create(_graph, clip);
+            var fixedOffsetTime = GetFixedTime(clip, clipOffsetTime, isFixedTime);
+            PlayPlayable(tag, playable, clipSpeed, fixedOffsetTime);
         }
 
-        public void PlayClips(IReadOnlyList<AnimationClipInfo> clipInfos, bool isFixedTime = false)
+        public void PlayMixClips(string tag, IReadOnlyList<AnimationClipInfo> clipInfos, float mixerSpeed = 1,
+            float fixedMixerOffsetTime = 0, bool isFixedClipTime = false)
         {
             var clipCount = clipInfos.Count;
             var mixer = AnimationMixerPlayable.Create(_graph, clipCount);
@@ -181,17 +233,17 @@ namespace GBG.VisualPlayable
             for (int i = 0; i < clipCount; i++)
             {
                 var clipInfo = clipInfos[i];
-                var animClipPlayable = AnimationClipPlayable.Create(_graph, clipInfo.Clip);
-                animClipPlayable.SetSpeed(clipInfo.Speed);
-                var fixedTime = GetFixedTime(clipInfo.Clip, clipInfo.Time, isFixedTime);
-                animClipPlayable.SetTime(fixedTime);
+                var playable = AnimationClipPlayable.Create(_graph, clipInfo.Clip);
+                playable.SetSpeed(clipInfo.Speed);
+                var fixedClipOffsetTime = GetFixedTime(clipInfo.Clip, clipInfo.Time, isFixedClipTime);
+                playable.SetTime(fixedClipOffsetTime);
 
-                mixer.ConnectInput(i, animClipPlayable, 0, clipInfo.Weight);
+                mixer.ConnectInput(i, playable, 0, clipInfo.Weight);
 
                 totalWeight += clipInfo.Weight;
             }
 
-            PlayPlayable(mixer);
+            PlayPlayable(tag, mixer, mixerSpeed, fixedMixerOffsetTime);
 
             if (!Mathf.Approximately(1, totalWeight))
             {
@@ -199,35 +251,38 @@ namespace GBG.VisualPlayable
             }
         }
 
-
-        public void PlayBlendSpace(IBlendSpace blendSpace, float speed = 1, float fixedTime = 0)
+        [System.Obsolete]
+        public void PlayBlendSpace(string tag, IBlendSpace blendSpace, float speed = 1, float fixedOffsetTime = 0)
         {
-            var blendSpacePlayable = blendSpace.Mixer;
-            blendSpacePlayable.SetSpeed(speed);
-            blendSpacePlayable.SetTime(fixedTime);
-
-            PlayPlayable(blendSpacePlayable);
+            PlayPlayable(tag, blendSpace.Mixer, speed, fixedOffsetTime);
         }
 
-
-        public void PlayPlayable(Playable playable)
+        public void PlayPlayable(string tag, Playable playable, float speed = 1, float fixedOffsetTime = 0)
         {
             ClearInputs();
 
+            if (playable.IsValid())
+            {
+                playable.SetSpeed(speed);
+                playable.SetTime(fixedOffsetTime);
+            }
+
             RootMixer.ConnectInput(_mainInputIndex, playable, 0, 1);
+
+            MainAnimationTag = tag;
         }
 
 
-        public void CrossFadeClip(AnimationClip clip, float speed = 1, float fixedFadeTime = 0.25f,
+        public void CrossFadeClip(string tag, AnimationClip clip, float speed = 1, float fixedFadeTime = 0.25f,
             float fixedOffsetTime = 0, bool frozeSource = false)
         {
-            var animClipPlayable = AnimationClipPlayable.Create(_graph, clip);
-            animClipPlayable.SetSpeed(speed);
-            CrossFadePlayable(animClipPlayable, fixedFadeTime, fixedOffsetTime, frozeSource);
+            var playable = AnimationClipPlayable.Create(_graph, clip);
+            CrossFadePlayable(tag, playable, speed, fixedFadeTime, fixedOffsetTime, frozeSource);
         }
 
-        public void CrossFadeClips(IReadOnlyList<AnimationClipInfo> clipInfos, float fixedFadeTime = 0.25f,
-            float fixedOffsetTime = 0, bool frozeSource = false, bool isFixedClipInfoTime = false)
+        public void CrossFadeMixClips(string tag, IReadOnlyList<AnimationClipInfo> clipInfos, float mixerSpeed = 1,
+            float fixedFadeTime = 0.25f, float fixedMixerOffsetTime = 0, bool frozeSource = false,
+            bool isFixedClipTime = false)
         {
             var clipCount = clipInfos.Count;
             var mixer = AnimationMixerPlayable.Create(_graph, clipCount);
@@ -237,7 +292,7 @@ namespace GBG.VisualPlayable
                 var clipInfo = clipInfos[i];
                 var animClipPlayable = AnimationClipPlayable.Create(_graph, clipInfo.Clip);
                 animClipPlayable.SetSpeed(clipInfo.Speed);
-                var fixedTime = GetFixedTime(clipInfo.Clip, clipInfo.Time, isFixedClipInfoTime);
+                var fixedTime = GetFixedTime(clipInfo.Clip, clipInfo.Time, isFixedClipTime);
                 animClipPlayable.SetTime(fixedTime);
 
                 mixer.ConnectInput(i, animClipPlayable, 0, clipInfo.Weight);
@@ -245,7 +300,7 @@ namespace GBG.VisualPlayable
                 totalWeight += clipInfo.Weight;
             }
 
-            CrossFadePlayable(mixer, fixedFadeTime, fixedOffsetTime, frozeSource);
+            CrossFadePlayable(tag, mixer, mixerSpeed, fixedFadeTime, fixedMixerOffsetTime, frozeSource);
 
             if (!Mathf.Approximately(1, totalWeight))
             {
@@ -253,19 +308,22 @@ namespace GBG.VisualPlayable
             }
         }
 
-
-        public void CrossFadeBlendSpace(IBlendSpace blendSpace, float speed = 1, float fixedFadeTime = 0.25f,
-            float fixedOffsetTime = 0, bool frozeSource = false)
+        [System.Obsolete]
+        public void CrossFadeBlendSpace(string tag, IBlendSpace blendSpace, float speed = 1,
+            float fixedFadeTime = 0.25f, float fixedOffsetTime = 0, bool frozeSource = false)
         {
-            var blendSpacePlayable = blendSpace.Mixer;
-            blendSpacePlayable.SetSpeed(speed);
-            CrossFadePlayable(blendSpacePlayable, fixedFadeTime, fixedOffsetTime, frozeSource);
+            CrossFadePlayable(tag, blendSpace.Mixer, speed, fixedFadeTime, fixedOffsetTime, frozeSource);
         }
 
-
-        public void CrossFadePlayable(Playable playable, float fixedFadeTime = 0.25f, float fixedOffsetTime = 0,
-            bool frozeSource = false)
+        public void CrossFadePlayable(string tag, Playable playable, float speed = 1, float fixedFadeTime = 0.25f,
+            float fixedOffsetTime = 0, bool frozeSource = false)
         {
+            if (playable.IsValid())
+            {
+                playable.SetSpeed(speed);
+                playable.SetTime(fixedOffsetTime);
+            }
+
             var validInputCount = GetValidInputCount();
             if (validInputCount == 0)
             {
@@ -307,7 +365,8 @@ namespace GBG.VisualPlayable
             RootMixer.ConnectInput(_mainInputIndex, playable, 0, 0);
             RootMixer.ConnectInput(1 - _mainInputIndex, sourcePlayable, 0, 1);
 
-            playable.SetTime(fixedOffsetTime);
+            MainAnimationTag = tag;
+
             _fixedCrossFadeTime = fixedFadeTime;
         }
 
@@ -330,10 +389,6 @@ namespace GBG.VisualPlayable
                 }
             }
         }
-
-
-        // BlendSpace1D
-        // BlendSpace2D
 
 
         private byte GetValidInputCount()
@@ -373,6 +428,8 @@ namespace GBG.VisualPlayable
 
             RootMixer.SetInputWeight(0, 0);
             RootMixer.SetInputWeight(1, 0);
+
+            MainAnimationTag = string.Empty;
 
             _mainInputIndex = 0;
             _fixedCrossFadeTime = 0;

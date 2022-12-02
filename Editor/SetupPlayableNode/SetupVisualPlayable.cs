@@ -19,6 +19,9 @@ namespace GBG.VisualPlayable.Editor.Setup
         private static readonly IReadOnlyList<Type> _visualPlayableTypeOptions = new[]
         {
             typeof(VisualPlayableExtensions),
+            typeof(AnimationBrain),
+            typeof(AnimationLayer),
+            typeof(AnimationClipInfo),
         };
 
 

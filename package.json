@@ -1,6 +1,6 @@
 {
   "name": "com.greenbamboogames.visualplayable",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "displayName": "Visual Playable!",
   "description": "Playable integration for visual scripting.",
   "unity": "2021.3",

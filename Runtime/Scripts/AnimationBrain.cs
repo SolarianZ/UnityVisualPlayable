@@ -15,6 +15,8 @@ namespace GBG.VisualPlayable
 
         private AnimationLayerMixerPlayable _layerMixer;
 
+        private bool _isManualUpdate;
+
 
         public AnimationBrain(Animator animator, string name)
         {
@@ -22,20 +24,16 @@ namespace GBG.VisualPlayable
             _graph = PlayableGraph.Create($"{nameof(AnimationBrain)}.{name}");
             _layerMixer = AnimationLayerMixerPlayable.Create(_graph);
 
+            var driverPlayable = ScriptPlayable<AnimationBrainBehaviour>.Create(_graph);
+            var driverBehaviour = driverPlayable.GetBehaviour();
+            driverBehaviour.Initialize(this);
+            var scriptOutput = ScriptPlayableOutput.Create(_graph, "Script Output");
+            scriptOutput.SetSourcePlayable(driverPlayable);
+
             var animOutput = AnimationPlayableOutput.Create(_graph, "Animation Output", _animator);
             animOutput.SetSourcePlayable(_layerMixer);
 
             _graph.Play();
-        }
-
-        public void Update(float deltaTime)
-        {
-            foreach (var layer in _layers)
-            {
-                layer.Update(deltaTime);
-            }
-
-            _graph.Evaluate(deltaTime);
         }
 
         public void Dispose()
@@ -62,6 +60,7 @@ namespace GBG.VisualPlayable
         public void SetTimeUpdateMode(DirectorUpdateMode updateMode)
         {
             _graph.SetTimeUpdateMode(updateMode);
+            _isManualUpdate = updateMode == DirectorUpdateMode.Manual;
         }
 
         public void Play()
@@ -74,6 +73,11 @@ namespace GBG.VisualPlayable
             _graph.Stop();
         }
 
+        public void Evaluate(float deltaTime)
+        {
+            _graph.Evaluate(deltaTime);
+        }
+
         #endregion
 
 
@@ -82,7 +86,17 @@ namespace GBG.VisualPlayable
         private readonly List<AnimationLayer> _layers = new();
 
 
+        internal void UpdateLayers(float deltaTime)
+        {
+            foreach (var layer in _layers)
+            {
+                layer.Update(deltaTime);
+            }
+        }
+
+
         [FailureOutputTriggerOnException]
+        [OutputPortLabel("Layer Index")]
         public byte AddLayer(string layerName, float weight = 0, bool isAdditive = false, AvatarMask mask = null)
         {
             if (layerName == null)
@@ -115,6 +129,7 @@ namespace GBG.VisualPlayable
             return newLayerIndex;
         }
 
+        [NodeSuffix("By Name")]
         [FailureOutputTriggerOnReturnNull]
         public AnimationLayer GetLayer(string layerName)
         {
@@ -127,12 +142,15 @@ namespace GBG.VisualPlayable
             return GetLayer((byte)layerIndex);
         }
 
+        [NodeSuffix("By Index")]
         [FailureOutputTriggerOnReturnNull]
         public AnimationLayer GetLayer(byte layerIndex)
         {
             return _layers[layerIndex];
         }
 
+        [NodeSuffix("By Name")]
+        [OutputPortLabel("Success")]
         [FailureOutputTriggerOnReturnFalse]
         public bool SetLayerWeight(string layerName, float weight)
         {
@@ -145,6 +163,8 @@ namespace GBG.VisualPlayable
             return SetLayerWeight((byte)layerIndex, weight);
         }
 
+        [NodeSuffix("By Index")]
+        [OutputPortLabel("Success")]
         [FailureOutputTriggerOnReturnFalse]
         public bool SetLayerWeight(byte layerIndex, float weight)
         {
@@ -157,6 +177,8 @@ namespace GBG.VisualPlayable
             return false;
         }
 
+        [NodeSuffix("By Name")]
+        [OutputPortLabel("Success")]
         [FailureOutputTriggerOnReturnFalse]
         public bool SetLayerAdditive(string layerName, bool isAdditive)
         {
@@ -169,6 +191,8 @@ namespace GBG.VisualPlayable
             return SetLayerAdditive((byte)layerIndex, isAdditive);
         }
 
+        [NodeSuffix("By Index")]
+        [OutputPortLabel("Success")]
         [FailureOutputTriggerOnReturnFalse]
         public bool SetLayerAdditive(byte layerIndex, bool isAdditive)
         {
@@ -182,6 +206,7 @@ namespace GBG.VisualPlayable
         }
 
         [FailureOutputTriggerOnReturnMinus]
+        [OutputPortLabel("Layer Index")]
         public int FindLayerIndex(string layerName)
         {
             for (int i = 0; i < _layers.Count; i++)

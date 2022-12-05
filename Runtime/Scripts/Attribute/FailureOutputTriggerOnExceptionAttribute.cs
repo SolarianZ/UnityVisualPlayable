@@ -5,9 +5,9 @@ namespace GBG.VisualPlayable.Attribute
     [AttributeUsage(AttributeTargets.Method)]
     internal abstract class FailureOutputTriggerAttributeBase : System.Attribute
     {
-        public string SuccessName { get; set; } = "Success";
+        public string SuccessLabel { get; set; } = "Success";
 
-        public string FailureName { get; set; } = "Failure";
+        public string FailureLabel { get; set; } = "Failure";
     }
 
     internal class FailureOutputTriggerOnExceptionAttribute : FailureOutputTriggerAttributeBase

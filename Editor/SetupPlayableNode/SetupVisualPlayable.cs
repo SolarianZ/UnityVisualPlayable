@@ -25,7 +25,7 @@ namespace GBG.VisualPlayable.Editor.Setup
         };
 
 
-        [MenuItem("Window/Bamboo/Visual Playable/Setup Visual Playable")]
+        [MenuItem("Tools/Bamboo/Visual Playable/Setup Visual Playable")]
         public static void Setup()
         {
             SetupNodeLibrary();

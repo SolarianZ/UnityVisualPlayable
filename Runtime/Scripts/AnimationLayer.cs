@@ -28,7 +28,7 @@ namespace GBG.VisualPlayable
             RootMixer.SetPropagateSetTime(true);
         }
 
-        public void Update(float deltaTime)
+        internal void Update(float deltaTime)
         {
             // Update cross fade
             UpdateCrossFade(deltaTime);
@@ -67,13 +67,15 @@ namespace GBG.VisualPlayable
         private float _fixedCorssFadeTimer;
 
 
-        [FailureOutputTriggerOnReturnFalse(SuccessName = "True", FailureName = "False")]
+        [FailureOutputTriggerOnReturnFalse(SuccessLabel = "True", FailureLabel = "False")]
+        [OutputPortLabel("In Transition")]
         public bool IsInTransition()
         {
             return _fixedCorssFadeTimer < _fixedCrossFadeTime;
         }
 
 
+        [OutputPortLabel("Speed")]
         public double GetSpeed()
         {
             var input = RootMixer.GetInput(_mainInputIndex);
@@ -85,6 +87,7 @@ namespace GBG.VisualPlayable
             return 0;
         }
 
+        [OutputPortLabel("Mix Speeds")]
         public void GetMixSpeeds(IList<double> speeds)
         {
             speeds.Clear();
@@ -145,6 +148,7 @@ namespace GBG.VisualPlayable
         }
 
 
+        [OutputPortLabel("Time")]
         public double GetTime()
         {
             var input = RootMixer.GetInput(_mainInputIndex);
@@ -156,6 +160,7 @@ namespace GBG.VisualPlayable
             return 0;
         }
 
+        [OutputPortLabel("Mix Times")]
         public void GetMixTimes(IList<double> times)
         {
             times.Clear();
@@ -252,7 +257,7 @@ namespace GBG.VisualPlayable
         }
 
         [System.Obsolete]
-        public void PlayBlendSpace(string tag, IBlendSpace blendSpace, float speed = 1, float fixedOffsetTime = 0)
+        internal void PlayBlendSpace(string tag, IBlendSpace blendSpace, float speed = 1, float fixedOffsetTime = 0)
         {
             PlayPlayable(tag, blendSpace.Mixer, speed, fixedOffsetTime);
         }
@@ -309,7 +314,7 @@ namespace GBG.VisualPlayable
         }
 
         [System.Obsolete]
-        public void CrossFadeBlendSpace(string tag, IBlendSpace blendSpace, float speed = 1,
+        internal  void CrossFadeBlendSpace(string tag, IBlendSpace blendSpace, float speed = 1,
             float fixedFadeTime = 0.25f, float fixedOffsetTime = 0, bool frozeSource = false)
         {
             CrossFadePlayable(tag, blendSpace.Mixer, speed, fixedFadeTime, fixedOffsetTime, frozeSource);

@@ -356,8 +356,8 @@ namespace GBG.VisualPlayable
             }
             else
             {
-                RootMixer.DisconnectInput(_mainInputIndex);
                 sourcePlayable = RootMixer.GetInput(_mainInputIndex);
+                RootMixer.DisconnectInput(_mainInputIndex);
             }
 
             if (frozeSource)

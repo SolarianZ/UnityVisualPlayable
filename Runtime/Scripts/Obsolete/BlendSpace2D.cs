@@ -3,7 +3,7 @@
 namespace GBG.VisualPlayable
 {
     // TODO: BlendSpace2D
-    public class BlendSpace2D : IBlendSpace
+    internal class BlendSpace2D : IBlendSpace
     {
         AnimationMixerPlayable IBlendSpace.Mixer => _mixer;
 

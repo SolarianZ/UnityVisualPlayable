@@ -1,27 +1,18 @@
-﻿using System;
+﻿using GBG.VisualPlayable.Editor.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Playables;
 
 namespace GBG.VisualPlayable.Editor.Setup
 {
     public static class SetupVisualPlayable
     {
-        private static readonly IReadOnlyList<AssemblyName> _visualPlayableNodeLibrary = new[]
+        private static readonly IReadOnlyList<AssemblyName> _nodeLibrary = new[]
         {
             typeof(VisualPlayableExtensions).Assembly.GetName(),
-        };
-
-        private static readonly IReadOnlyList<Type> _visualPlayableTypeOptions = new[]
-        {
-            typeof(VisualPlayableExtensions),
-            typeof(AnimationBrain),
-            typeof(AnimationLayer),
-            typeof(AnimationClipInfo),
         };
 
 
@@ -36,7 +27,7 @@ namespace GBG.VisualPlayable.Editor.Setup
         public static void SetupNodeLibrary()
         {
             var boltNodeLibraryChanged = false;
-            foreach (var asmName in _visualPlayableNodeLibrary)
+            foreach (var asmName in _nodeLibrary)
             {
                 var looseAsmName = (LooseAssemblyName)asmName;
                 if (!BoltCore.Configuration.assemblyOptions.Contains(looseAsmName))
@@ -59,7 +50,7 @@ namespace GBG.VisualPlayable.Editor.Setup
         public static void SetupTypeOptions()
         {
             var boltTypeOptionsChanged = false;
-            var allTypes = _visualPlayableTypeOptions.Concat(CollectPlayableTypes());
+            var allTypes = TypeTool.CollectPlayableTypes().Concat(TypeTool.CollectVisualPlayableTypes());
             foreach (var type in allTypes)
             {
                 if (!BoltCore.Configuration.typeOptions.Contains(type))
@@ -77,17 +68,6 @@ namespace GBG.VisualPlayable.Editor.Setup
                 typeOptionsMetadata.Save();
                 Codebase.UpdateSettings();
             }
-        }
-
-        private static Type[] CollectPlayableTypes()
-        {
-            var types = from assembly in AppDomain.CurrentDomain.GetAssemblies()
-                from type in assembly.GetTypes()
-                where type.IsPublic && !type.IsGenericType && !type.IsInterface &&
-                      typeof(IPlayable).IsAssignableFrom(type)
-                select type;
-
-            return types.ToArray();
         }
     }
 }

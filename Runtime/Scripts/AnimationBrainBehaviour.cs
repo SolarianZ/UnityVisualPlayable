@@ -1,7 +1,9 @@
-﻿using UnityEngine.Playables;
+﻿using GBG.VisualPlayable.Attribute;
+using UnityEngine.Playables;
 
 namespace GBG.VisualPlayable
 {
+    [ExcludeFromNodeGenerate]
     public class AnimationBrainBehaviour : PlayableBehaviour
     {
         private AnimationBrain _brain;

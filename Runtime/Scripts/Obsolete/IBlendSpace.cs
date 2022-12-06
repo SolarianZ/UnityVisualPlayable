@@ -2,7 +2,7 @@
 
 namespace GBG.VisualPlayable
 {
-    public interface IBlendSpace
+    internal interface IBlendSpace
     {
         internal AnimationMixerPlayable Mixer { get; }
     }

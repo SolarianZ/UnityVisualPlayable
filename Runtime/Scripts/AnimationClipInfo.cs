@@ -1,16 +1,22 @@
-﻿using UnityEngine;
+﻿using GBG.VisualPlayable.Attribute;
+using System;
+using UnityEngine;
 
 namespace GBG.VisualPlayable
 {
-    public readonly struct AnimationClipInfo
+    [ExcludeFromNodeGenerate]
+    [Serializable]
+    public struct AnimationClipInfo
     {
-        public readonly AnimationClip Clip;
+        public AnimationClip Clip;
 
-        public readonly float Speed;
+        public float Speed;
 
-        public readonly float Time;
+        [Min(0)]
+        public float Time;
 
-        public readonly float Weight;
+        [Range(0, 1)]
+        public float Weight;
 
 
         public AnimationClipInfo(AnimationClip clip, float weight, float speed = 1, float time = 0)

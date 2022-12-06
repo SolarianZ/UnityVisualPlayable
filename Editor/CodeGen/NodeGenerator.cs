@@ -1,4 +1,5 @@
 ﻿using GBG.VisualPlayable.Attribute;
+using GBG.VisualPlayable.Editor.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,14 +27,14 @@ namespace GBG.VisualPlayable.Editor.CodeGen
 
     public static class NodeGenerator
     {
-        private static readonly IReadOnlyList<Type> _visualPlayableTypes = new List<Type>
-        {
-            typeof(AnimationBrain), typeof(AnimationLayer)
-        };
-
         [MenuItem("Tools/Bamboo/Visual Playable/[DEV] Regenerate Visual Playable Node Source Code")]
         public static void RegenerateVisualPlayableNodes()
         {
+            if (!EditorUtility.DisplayDialog("Warning", "Delete existing codes and re-generate codes?", "Yes", "No"))
+            {
+                return;
+            }
+
             const string codeGenParentFolder = "Packages/com.greenbamboogames.visualplayable/Runtime/Scripts";
             const string codeGenFolderName = "Generated";
             var codeGenFolder = $"{codeGenParentFolder}/{codeGenFolderName}";
@@ -42,7 +43,8 @@ namespace GBG.VisualPlayable.Editor.CodeGen
             AssetDatabase.DeleteAsset(codeGenFolder);
             AssetDatabase.CreateFolder(codeGenParentFolder, codeGenFolderName);
 
-            foreach (Type visualPlayableType in _visualPlayableTypes)
+            var types = TypeTool.CollectVisualPlayableTypes();
+            foreach (Type visualPlayableType in types)
             {
                 var visualPlayableTypeFolder = $"{codeGenFolder}/{visualPlayableType.Name}";
                 if (!AssetDatabase.IsValidFolder(visualPlayableTypeFolder))
@@ -99,7 +101,7 @@ namespace GBG.VisualPlayable.Editor.CodeGen
                     continue;
                 }
 
-                if (method.GetAttribute<ExcludeMethodFromNodeAttribute>() != null)
+                if (method.GetAttribute<ExcludeFromNodeGenerateAttribute>() != null)
                 {
                     continue;
                 }

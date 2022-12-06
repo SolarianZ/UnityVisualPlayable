@@ -1,8 +1,10 @@
+using GBG.VisualPlayable.Attribute;
 using System;
 using UnityEngine.Playables;
 
 namespace GBG.VisualPlayable
 {
+    [ExcludeFromNodeGenerate]
     public static class VisualPlayableExtensions
     {
         public static bool IsNull(Playable playable)

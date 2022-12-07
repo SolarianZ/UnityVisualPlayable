@@ -14,11 +14,11 @@ namespace GBG.VisualPlayable
             _brain = brain;
         }
 
-        public override void PrepareFrame(Playable playable, FrameData info)
+        public override void PrepareFrame(Playable playable, FrameData frameData)
         {
-            base.PrepareFrame(playable, info);
+            base.PrepareFrame(playable, frameData);
 
-            _brain.UpdateLayers(info.deltaTime);
+            _brain.UpdateLayers(frameData.deltaTime);
         }
     }
 }

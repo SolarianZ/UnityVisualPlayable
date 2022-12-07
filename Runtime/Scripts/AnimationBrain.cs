@@ -15,8 +15,6 @@ namespace GBG.VisualPlayable
 
         private AnimationLayerMixerPlayable _layerMixer;
 
-        private bool _isManualUpdate;
-
 
         public AnimationBrain(Animator animator, string name)
         {
@@ -45,6 +43,47 @@ namespace GBG.VisualPlayable
         }
 
 
+        #region Animation Events
+
+        public event AnimationLayerEventHandler OnClipEnter;
+
+        public event AnimationLayerEventHandler OnClipExit;
+
+        public event AnimationLayerEventHandler OnTransitionStart;
+
+        public event AnimationLayerEventHandler OnTransitionComplete;
+
+        public event AnimationLayerEventHandler OnTransitionInterrupted;
+
+
+        private void HandleClipEnterEvent(string layerName, byte layerIndex, string mainAnimationTag)
+        {
+            OnClipEnter?.Invoke(layerName, layerIndex, mainAnimationTag);
+        }
+
+        private void HandleClipExitEvent(string layerName, byte layerIndex, string mainAnimationTag)
+        {
+            OnClipExit?.Invoke(layerName, layerIndex, mainAnimationTag);
+        }
+
+        private void HandleTransitionStartEvent(string layerName, byte layerIndex, string mainAnimationTag)
+        {
+            OnTransitionStart?.Invoke(layerName, layerIndex, mainAnimationTag);
+        }
+
+        private void HandleTransitionCompleteEvent(string layerName, byte layerIndex, string mainAnimationTag)
+        {
+            OnTransitionComplete?.Invoke(layerName, layerIndex, mainAnimationTag);
+        }
+
+        private void HandleTransitionInterruptedEvent(string layerName, byte layerIndex, string mainAnimationTag)
+        {
+            OnTransitionInterrupted?.Invoke(layerName, layerIndex, mainAnimationTag);
+        }
+
+        #endregion
+
+
         #region Graph Management
 
         public bool IsPlaying()
@@ -60,7 +99,6 @@ namespace GBG.VisualPlayable
         public void SetTimeUpdateMode(DirectorUpdateMode updateMode)
         {
             _graph.SetTimeUpdateMode(updateMode);
-            _isManualUpdate = updateMode == DirectorUpdateMode.Manual;
         }
 
         public void Play()
@@ -117,6 +155,12 @@ namespace GBG.VisualPlayable
 
             var newLayerIndex = (byte)existLayerCount;
             var layer = new AnimationLayer(_graph, layerName, newLayerIndex);
+            layer.OnClipEnter += HandleClipEnterEvent;
+            layer.OnClipExit += HandleClipExitEvent;
+            layer.OnTransitionStart += HandleTransitionStartEvent;
+            layer.OnTransitionComplete += HandleTransitionCompleteEvent;
+            layer.OnTransitionInterrupted += HandleTransitionInterruptedEvent;
+
             _layerMixer.AddInput(layer.RootMixer, 0, weight);
             _layerMixer.SetLayerAdditive(newLayerIndex, isAdditive);
             if (mask)
@@ -198,7 +242,7 @@ namespace GBG.VisualPlayable
         {
             if (layerIndex < _layerMixer.GetInputCount())
             {
-                _layerMixer.SetLayerAdditive((uint)layerIndex, isAdditive);
+                _layerMixer.SetLayerAdditive(layerIndex, isAdditive);
                 return true;
             }
 

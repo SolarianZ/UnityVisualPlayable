@@ -1,4 +1,5 @@
 ﻿using GBG.VisualPlayable.Attribute;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Animations;
@@ -6,6 +7,8 @@ using UnityEngine.Playables;
 
 namespace GBG.VisualPlayable
 {
+    public delegate void AnimationLayerEventHandler(string layerName, byte layerIndex, string mainAnimationTag);
+
     public class AnimationLayer
     {
         public string Name { get; }
@@ -54,10 +57,15 @@ namespace GBG.VisualPlayable
 
         public string MainAnimationTag { get; private set; } = string.Empty;
 
-        // ClipStartEvent
-        // ClipStopEvent
-        // TransitionBeginEvent
-        // TransitionEndEvent
+        public event AnimationLayerEventHandler OnClipEnter;
+
+        public event AnimationLayerEventHandler OnClipExit;
+
+        public event AnimationLayerEventHandler OnTransitionStart;
+
+        public event AnimationLayerEventHandler OnTransitionComplete;
+
+        public event AnimationLayerEventHandler OnTransitionInterrupted;
 
 
         private byte _mainInputIndex;
@@ -256,7 +264,7 @@ namespace GBG.VisualPlayable
             }
         }
 
-        [System.Obsolete]
+        [Obsolete]
         internal void PlayBlendSpace(string tag, IBlendSpace blendSpace, float speed = 1, float fixedOffsetTime = 0)
         {
             PlayPlayable(tag, blendSpace.Mixer, speed, fixedOffsetTime);
@@ -273,8 +281,9 @@ namespace GBG.VisualPlayable
             }
 
             RootMixer.ConnectInput(_mainInputIndex, playable, 0, 1);
-
             MainAnimationTag = tag;
+
+            OnClipEnter?.Invoke(Name, Index, MainAnimationTag);
         }
 
 
@@ -313,8 +322,8 @@ namespace GBG.VisualPlayable
             }
         }
 
-        [System.Obsolete]
-        internal  void CrossFadeBlendSpace(string tag, IBlendSpace blendSpace, float speed = 1,
+        [Obsolete]
+        internal void CrossFadeBlendSpace(string tag, IBlendSpace blendSpace, float speed = 1,
             float fixedFadeTime = 0.25f, float fixedOffsetTime = 0, bool frozeSource = false)
         {
             CrossFadePlayable(tag, blendSpace.Mixer, speed, fixedFadeTime, fixedOffsetTime, frozeSource);
@@ -336,6 +345,8 @@ namespace GBG.VisualPlayable
                 RootMixer.SetInputWeight(1, 0);
                 _mainInputIndex = 0;
 
+                OnTransitionStart?.Invoke(Name, Index, MainAnimationTag);
+                OnTransitionComplete?.Invoke(Name, Index, MainAnimationTag);
                 return;
             }
 
@@ -369,10 +380,11 @@ namespace GBG.VisualPlayable
 
             RootMixer.ConnectInput(_mainInputIndex, playable, 0, 0);
             RootMixer.ConnectInput(1 - _mainInputIndex, sourcePlayable, 0, 1);
-
             MainAnimationTag = tag;
 
             _fixedCrossFadeTime = fixedFadeTime;
+
+            OnTransitionStart?.Invoke(Name, Index, MainAnimationTag);
         }
 
         private void UpdateCrossFade(float deltaTime)
@@ -390,7 +402,7 @@ namespace GBG.VisualPlayable
                     RootMixer.DisconnectInput(1 - _mainInputIndex);
                     crossFadeSourcePlayable.Destroy();
 
-                    // TODO: Transition end event
+                    OnTransitionComplete?.Invoke(Name, Index, MainAnimationTag);
                 }
             }
         }
@@ -417,9 +429,13 @@ namespace GBG.VisualPlayable
 
         private void ClearInputs()
         {
+            var isInTransition = IsInTransition();
+            var hasValidInput = false;
+
             var input0 = RootMixer.GetInput(0);
             if (input0.IsValid())
             {
+                hasValidInput = true;
                 RootMixer.DisconnectInput(0);
                 input0.Destroy();
             }
@@ -427,6 +443,7 @@ namespace GBG.VisualPlayable
             var input1 = RootMixer.GetInput(1);
             if (input1.IsValid())
             {
+                hasValidInput = true;
                 RootMixer.DisconnectInput(1);
                 input1.Destroy();
             }
@@ -439,6 +456,15 @@ namespace GBG.VisualPlayable
             _mainInputIndex = 0;
             _fixedCrossFadeTime = 0;
             _fixedCorssFadeTimer = 0;
+
+            if (isInTransition)
+            {
+                OnTransitionInterrupted?.Invoke(Name, Index, MainAnimationTag);
+            }
+            else if (hasValidInput)
+            {
+                OnClipExit?.Invoke(Name, Index, MainAnimationTag);
+            }
         }
 
         private static float GetFixedTime(AnimationClip clip, float time, bool isFixedTime)

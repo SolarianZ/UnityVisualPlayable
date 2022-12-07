@@ -337,7 +337,7 @@ namespace GBG.VisualPlayable.Editor.CodeGen
                 srcBuilder.AppendLine($"Succession({_INPUT_TRIGGER_NAME}, {_FAILURE_OUTPUT_TRIGGER_NAME});");
             }
 
-            // TODO: Definition - Assignments
+            // Definition - Assignments
             srcBuilder.AppendLine();
             if (returnType != typeof(void))
             {
@@ -350,7 +350,7 @@ namespace GBG.VisualPlayable.Editor.CodeGen
             // Definition method end
             srcBuilder.AppendLine("}");
 
-            // TODO: OnTriggered method start
+            // OnTriggered method start
             srcBuilder.AppendLine();
             srcBuilder.AppendLine("private ControlOutput OnTriggered(Flow flow)").AppendLine("{");
             if (failureOutputAttr != null)

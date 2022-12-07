@@ -1,9 +1,15 @@
-﻿using GBG.VisualPlayable.Attribute;
+﻿#define ENABLE_VISUAL_PLAYABLE
+
+using GBG.VisualPlayable.Attribute;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
+
+#if ENABLE_VISUAL_PLAYABLE
+using EventBus = Unity.VisualScripting.EventBus;
+#endif
 
 namespace GBG.VisualPlayable
 {
@@ -59,26 +65,51 @@ namespace GBG.VisualPlayable
         private void HandleClipEnterEvent(string layerName, byte layerIndex, string mainAnimationTag)
         {
             OnClipEnter?.Invoke(layerName, layerIndex, mainAnimationTag);
+
+#if ENABLE_VISUAL_PLAYABLE
+            EventBus.Trigger(VisualNode.VisualAnimationClipEnterEvent.EventName,
+                new VisualNode.VisualAnimationEventArgs(layerName, layerIndex, mainAnimationTag));
+#endif
         }
 
         private void HandleClipExitEvent(string layerName, byte layerIndex, string mainAnimationTag)
         {
             OnClipExit?.Invoke(layerName, layerIndex, mainAnimationTag);
+
+#if ENABLE_VISUAL_PLAYABLE
+            EventBus.Trigger(VisualNode.VisualAnimationClipExitEvent.EventName,
+                new VisualNode.VisualAnimationEventArgs(layerName, layerIndex, mainAnimationTag));
+#endif
         }
 
         private void HandleTransitionStartEvent(string layerName, byte layerIndex, string mainAnimationTag)
         {
             OnTransitionStart?.Invoke(layerName, layerIndex, mainAnimationTag);
+
+#if ENABLE_VISUAL_PLAYABLE
+            EventBus.Trigger(VisualNode.VisualAnimationTransitionStartEvent.EventName,
+                new VisualNode.VisualAnimationEventArgs(layerName, layerIndex, mainAnimationTag));
+#endif
         }
 
         private void HandleTransitionCompleteEvent(string layerName, byte layerIndex, string mainAnimationTag)
         {
             OnTransitionComplete?.Invoke(layerName, layerIndex, mainAnimationTag);
+
+#if ENABLE_VISUAL_PLAYABLE
+            EventBus.Trigger(VisualNode.VisualAnimationTransitionCompleteEvent.EventName,
+                new VisualNode.VisualAnimationEventArgs(layerName, layerIndex, mainAnimationTag));
+#endif
         }
 
         private void HandleTransitionInterruptedEvent(string layerName, byte layerIndex, string mainAnimationTag)
         {
             OnTransitionInterrupted?.Invoke(layerName, layerIndex, mainAnimationTag);
+
+#if ENABLE_VISUAL_PLAYABLE
+            EventBus.Trigger(VisualNode.VisualAnimationTransitionInterruptedEvent.EventName,
+                new VisualNode.VisualAnimationEventArgs(layerName, layerIndex, mainAnimationTag));
+#endif
         }
 
         #endregion
